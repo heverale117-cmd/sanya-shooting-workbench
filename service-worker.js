@@ -1,4 +1,4 @@
-const CACHE_NAME = "sanya-shooting-workbench-v3";
+const CACHE_NAME = "sanya-shooting-workbench-v4";
 const ASSETS = [
   "./sanya-shooting-assistant.html",
   "./shooting-data.js",
