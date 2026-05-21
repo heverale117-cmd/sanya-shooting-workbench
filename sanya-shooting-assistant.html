@@ -445,6 +445,20 @@
         flex: 1 1 88px;
       }
 
+      .done-action {
+        flex-basis: 100%;
+        min-height: 46px;
+        border-color: rgba(111, 135, 97, 0.5);
+        background: var(--easy-soft);
+        color: #4f6645;
+      }
+
+      .done-action.todo {
+        border-color: rgba(184, 91, 66, 0.55);
+        background: #fff7ee;
+        color: var(--core);
+      }
+
       .check {
         display: inline-flex;
         align-items: center;
@@ -1082,6 +1096,7 @@
               <div class="block"><h4 class="block-title">拍什么</h4><p>${esc(clean(shot.shootWhat, "现场补一条干净素材"))}</p></div>
               <details><summary>拍摄要点 / 成品关系</summary><div class="points">${esc(clean(shot.points, "无额外要点"))}</div><div class="block muted">${esc(shotProductText(shot))}</div></details>
               <div class="card-actions">
+                <button class="ghost-btn done-action ${done ? "" : "todo"}" data-toggle-shot="${esc(shot.id)}" type="button">${done ? "取消已拍" : "标记这条素材已拍"}</button>
                 <button class="ghost-btn" data-edit-shot="${esc(shot.id)}" type="button">编辑</button>
                 <button class="ghost-btn danger" data-delete-shot="${esc(shot.id)}" type="button">删除</button>
                 <button class="ghost-btn" data-ref-shot="${esc(shot.id)}" type="button">加链接</button>
@@ -1185,6 +1200,7 @@
 
       function bindCardEvents() {
         document.querySelectorAll("[data-done-shot]").forEach((input) => input.addEventListener("change", () => { setShotDone(input.dataset.doneShot, input.checked); render(); }));
+        document.querySelectorAll("[data-toggle-shot]").forEach((btn) => btn.addEventListener("click", () => { setShotDone(btn.dataset.toggleShot, !isShotDone(btn.dataset.toggleShot)); render(); }));
         document.querySelectorAll("[data-done-product]").forEach((input) => input.addEventListener("change", () => { setProductDone(input.dataset.doneProduct, input.checked); render(); }));
         document.querySelectorAll("[data-select]").forEach((input) => input.addEventListener("change", () => {
           if (input.checked) state.selected.add(input.dataset.select);
