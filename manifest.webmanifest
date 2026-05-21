@@ -1,0 +1,9 @@
+{
+  "name": "三亚拍摄工作台",
+  "short_name": "三亚拍摄",
+  "start_url": "./sanya-shooting-assistant.html",
+  "display": "standalone",
+  "background_color": "#f5efe5",
+  "theme_color": "#f5efe5",
+  "description": "三亚旅行拍摄素材、成品、笔记和检查清单工作台"
+}
