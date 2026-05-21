@@ -1,0 +1,1451 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5efe5" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <title>三亚拍摄工作台</title>
+    <script src="./shooting-data.js"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #f5efe5;
+        --paper: #fffdf8;
+        --warm: #fbf6ed;
+        --ink: #3d332b;
+        --muted: #82766b;
+        --soft: #b7aa9a;
+        --line: #e2d4c2;
+        --core: #b85b42;
+        --core-soft: #f6ded5;
+        --high: #c8912d;
+        --high-soft: #f3e4c4;
+        --easy: #6f8761;
+        --easy-soft: #e2ead8;
+        --shadow: 0 12px 32px rgba(64, 52, 39, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--page);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        font-size: 16px;
+        line-height: 1.58;
+        letter-spacing: 0;
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+
+      button {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .app {
+        width: min(100%, 780px);
+        margin: 0 auto;
+        padding-bottom: max(34px, env(safe-area-inset-bottom));
+      }
+
+      .top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(245, 239, 229, 0.96);
+        border-bottom: 1px solid rgba(212, 195, 174, 0.72);
+        backdrop-filter: blur(14px);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+        padding: max(12px, env(safe-area-inset-top)) 14px 10px;
+      }
+
+      .hero h1 {
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 23px;
+        line-height: 1.22;
+      }
+
+      .hero p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .primary-btn,
+      .ghost-btn,
+      .tiny-btn {
+        border-radius: 14px;
+        font-weight: 760;
+      }
+
+      .primary-btn {
+        min-height: 42px;
+        border: 1.5px solid var(--core);
+        background: var(--core);
+        color: #fffaf4;
+        padding: 0 13px;
+      }
+
+      .ghost-btn {
+        min-height: 42px;
+        border: 1px solid var(--line);
+        background: var(--paper);
+        color: var(--ink);
+        padding: 0 13px;
+      }
+
+      .tiny-btn {
+        min-height: 34px;
+        border: 1px solid var(--line);
+        background: var(--paper);
+        color: var(--muted);
+        padding: 0 10px;
+        font-size: 14px;
+      }
+
+      .mode-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding: 0 14px 11px;
+      }
+
+      .mode-tab {
+        min-height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 253, 248, 0.86);
+        color: #75695d;
+        font-size: 15px;
+        font-weight: 760;
+      }
+
+      .mode-tab.active {
+        border-color: rgba(184, 91, 66, 0.55);
+        background: #fff7ee;
+        color: var(--core);
+      }
+
+      .tools {
+        display: grid;
+        gap: 10px;
+        padding: 0 14px 14px;
+      }
+
+      .search-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+      }
+
+      .search-row input {
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--paper);
+        color: var(--ink);
+        padding: 0 12px;
+        outline: none;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scroll-padding: 14px;
+      }
+
+      .chips::-webkit-scrollbar,
+      .action-row::-webkit-scrollbar {
+        display: none;
+      }
+
+      .chip {
+        flex: 0 0 auto;
+        min-height: 39px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 253, 248, 0.9);
+        color: #75695d;
+        padding: 0 13px;
+      }
+
+      .chip.active {
+        border-color: rgba(184, 91, 66, 0.55);
+        background: #fff7ee;
+        color: var(--core);
+      }
+
+      .action-row {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        overflow-x: auto;
+      }
+
+      .action-row button {
+        flex: 0 0 auto;
+      }
+
+      .content {
+        padding: 22px 14px 0;
+      }
+
+      .section-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: end;
+        margin-bottom: 13px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: 26px;
+        line-height: 1.2;
+      }
+
+      .section-head p {
+        margin: 4px 0 0;
+        color: var(--muted);
+      }
+
+      .cards,
+      .lists {
+        display: grid;
+        gap: 14px;
+      }
+
+      .card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--paper);
+        box-shadow: var(--shadow);
+      }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 7px;
+        background: var(--easy);
+      }
+
+      .card.core::before {
+        background: var(--core);
+      }
+
+      .card.high::before {
+        background: var(--high);
+      }
+
+      .card.done {
+        opacity: 0.62;
+      }
+
+      .inner {
+        padding: 18px 17px 18px 25px;
+      }
+
+      .card-top {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: start;
+      }
+
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 8px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border-radius: 10px;
+        background: #f1ece5;
+        color: var(--muted);
+        padding: 0 10px;
+        font-size: 14px;
+        font-weight: 760;
+      }
+
+      .badge.core {
+        background: var(--core);
+        color: #fffaf4;
+      }
+
+      .badge.high {
+        background: var(--high);
+        color: #fffaf4;
+      }
+
+      .badge.easy {
+        background: var(--easy-soft);
+        color: #4f6645;
+      }
+
+      .card h3 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.32;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+        color: var(--muted);
+      }
+
+      .minimum {
+        display: inline-flex;
+        gap: 8px;
+        margin-top: 14px;
+        border-radius: 13px;
+        background: #f2eee8;
+        padding: 8px 12px;
+        color: var(--muted);
+      }
+
+      .minimum b {
+        color: #8f4d37;
+      }
+
+      .block {
+        margin-top: 14px;
+      }
+
+      .block-title {
+        margin: 0 0 5px;
+        color: #74695f;
+        font-size: 15px;
+        font-weight: 780;
+      }
+
+      .block p {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      details {
+        margin-top: 12px;
+      }
+
+      summary {
+        color: var(--muted);
+        font-weight: 760;
+      }
+
+      .points {
+        margin-top: 7px;
+        border: 1px dashed var(--line);
+        border-radius: 14px;
+        background: var(--warm);
+        color: #6f655b;
+        padding: 10px 12px;
+      }
+
+      .refs,
+      .shot-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .ref-link,
+      .shot-pill {
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+        min-height: 36px;
+        border: 1px solid rgba(184, 91, 66, 0.35);
+        border-radius: 999px;
+        background: #fff8f1;
+        color: var(--core);
+        padding: 7px 11px;
+        text-decoration: none;
+        font-weight: 760;
+        font-size: 15px;
+      }
+
+      .shot-pill.done {
+        border-color: rgba(111, 135, 97, 0.38);
+        background: var(--easy-soft);
+        color: #4f6645;
+      }
+
+      .card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .card-actions .ghost-btn {
+        min-height: 38px;
+        flex: 1 1 88px;
+      }
+
+      .check {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 36px;
+        color: var(--muted);
+        font-weight: 760;
+      }
+
+      .check input,
+      .batch-check {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--core);
+      }
+
+      .empty,
+      .bulk-panel,
+      .summary-box {
+        border: 1px dashed var(--line);
+        border-radius: 18px;
+        background: var(--paper);
+        color: var(--muted);
+        padding: 16px;
+      }
+
+      .bulk-panel {
+        display: none;
+        margin-bottom: 14px;
+      }
+
+      .bulk-panel.open {
+        display: grid;
+        gap: 10px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field label {
+        color: #74695f;
+        font-size: 14px;
+        font-weight: 780;
+      }
+
+      .field input,
+      .field textarea,
+      .field select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--paper);
+        color: var(--ink);
+        padding: 10px 11px;
+        outline: none;
+      }
+
+      .field textarea {
+        min-height: 88px;
+        resize: vertical;
+      }
+
+      .field-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        display: none;
+        align-items: flex-end;
+        background: rgba(42, 34, 27, 0.38);
+      }
+
+      .modal-backdrop.open {
+        display: flex;
+      }
+
+      .sheet {
+        width: min(100%, 780px);
+        max-height: 92vh;
+        margin: 0 auto;
+        overflow: auto;
+        border-radius: 24px 24px 0 0;
+        background: var(--page);
+        box-shadow: 0 -18px 48px rgba(45, 36, 27, 0.22);
+        padding: 18px 14px max(22px, env(safe-area-inset-bottom));
+      }
+
+      .sheet-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: start;
+        margin-bottom: 14px;
+      }
+
+      .sheet-head h2 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .sheet-head p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .form {
+        display: grid;
+        gap: 12px;
+      }
+
+      .ref-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 42px;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 253, 248, 0.78);
+        padding: 10px;
+        margin-top: 8px;
+      }
+
+      .ref-row-fields {
+        display: grid;
+        gap: 8px;
+      }
+
+      .remove-ref {
+        width: 42px;
+        height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--warm);
+        color: var(--core);
+        font-size: 20px;
+        font-weight: 800;
+      }
+
+      .footer {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 8px;
+      }
+
+      .danger {
+        color: var(--core);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .stat {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--paper);
+        padding: 12px;
+      }
+
+      .stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .stat b {
+        display: block;
+        margin-top: 5px;
+        font-size: 24px;
+      }
+
+      @media (max-width: 430px) {
+        .section-head,
+        .hero,
+        .field-grid,
+        .footer {
+          grid-template-columns: 1fr;
+        }
+
+        .mode-tabs {
+          gap: 5px;
+        }
+
+        .mode-tab {
+          min-height: 39px;
+          font-size: 14px;
+        }
+
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="top">
+        <header class="hero">
+          <div>
+            <h1 id="pageTitle">场景模式</h1>
+            <p id="pageSub">现场只看要拍什么，链接收进成品里。</p>
+          </div>
+          <button class="primary-btn" id="addBtn" type="button">新增</button>
+        </header>
+
+        <nav class="mode-tabs" aria-label="页面模式">
+          <button class="mode-tab active" data-mode="scene" type="button">场景</button>
+          <button class="mode-tab" data-mode="product" type="button">成品</button>
+          <button class="mode-tab" data-mode="note" type="button">笔记</button>
+          <button class="mode-tab" data-mode="check" type="button">检查</button>
+        </nav>
+
+        <div class="tools">
+          <div class="search-row">
+            <input id="searchInput" autocomplete="off" placeholder="输入场景 / 成品 / 素材关键词" />
+            <button class="ghost-btn" id="searchBtn" type="button">查找</button>
+          </div>
+          <div class="chips" id="sceneChips"></div>
+          <div class="action-row">
+            <button class="ghost-btn" id="bulkBtn" type="button">批量加链接</button>
+            <button class="ghost-btn" id="showDoneBtn" type="button">只看已拍</button>
+            <button class="ghost-btn" id="showTodoBtn" type="button">只看待拍</button>
+            <button class="ghost-btn" id="clearFilterBtn" type="button">全部</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="section-head">
+          <div>
+            <h2 id="sectionTitle">机场酒店</h2>
+            <p id="sectionMeta">读取中</p>
+          </div>
+        </div>
+
+        <div class="bulk-panel" id="bulkPanel">
+          <div class="summary-box" id="bulkSummary">选择要批量修改的卡片。</div>
+          <div class="field">
+            <label for="bulkRefTitle">参考标题</label>
+            <input id="bulkRefTitle" placeholder="例如：酒店转场参考" />
+          </div>
+          <div class="field">
+            <label for="bulkRefUrl">参考链接</label>
+            <input id="bulkRefUrl" placeholder="https://..." />
+          </div>
+          <div class="field">
+            <label for="bulkRefMeta">备注</label>
+            <input id="bulkRefMeta" placeholder="例如：必拍 / VLOG开头 / 动作参考" />
+          </div>
+          <button class="primary-btn" id="applyBulkBtn" type="button">保存到选中的卡片</button>
+        </div>
+
+        <div id="mainView"></div>
+      </section>
+    </main>
+
+    <div class="modal-backdrop" id="editorModal" aria-hidden="true">
+      <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+        <div class="sheet-head">
+          <div>
+            <h2 id="editorTitle">编辑</h2>
+            <p id="editorSub">保存到当前浏览器</p>
+          </div>
+          <button class="ghost-btn" id="closeEditor" type="button">关闭</button>
+        </div>
+        <form class="form" id="editorForm"></form>
+      </section>
+    </div>
+
+    <script>
+      const DATA = window.SANYA_SHOOTING_DATA || { products: [], shots: [] };
+      const STORE_KEY = "sanya-shooting-workbench-v1";
+      const OLD_EDIT_KEY = "sanya-shot-card-edits-v1";
+
+      const sceneGroups = [
+        { label: "出发前/家里", terms: ["出发前/家里"] },
+        { label: "机场酒店", terms: ["机场酒店"] },
+        { label: "出发机场", terms: ["出发机场"] },
+        { label: "三亚机场", terms: ["到达三亚机场"] },
+        { label: "酒店抵达", terms: ["酒店-抵达"] },
+        { label: "酒店房间", terms: ["酒店房间"] },
+        { label: "酒店公区", terms: ["酒店公区"] },
+        { label: "酒店餐饮", terms: ["酒店餐饮"] },
+        { label: "酒店服务", terms: ["酒店服务"] },
+        { label: "酒店沙滩/海边", terms: ["酒店沙滩/海边"] },
+        { label: "水上活动", terms: ["水上活动"] },
+        { label: "拍照过程", terms: ["拍照过程"] },
+        { label: "免税店", terms: ["免税店"] },
+        { label: "退房/离店", terms: ["退房/离店"] },
+        { label: "返程机场", terms: ["返程机场"] },
+        { label: "返程/回家", terms: ["返程/回家"] },
+        { label: "全场景通用", terms: ["全场景通用"] },
+      ];
+
+      const priorityRank = { 核心必拍: 0, 高收益: 1, 顺手拍: 2 };
+
+      const state = {
+        mode: "scene",
+        query: localStorage.getItem("sanya-current-query") || "机场酒店",
+        statusFilter: "all",
+        batch: false,
+        selected: new Set(),
+        editing: null,
+        store: loadStore(),
+      };
+
+      function defaultStore() {
+        const oldEdits = readJson(localStorage.getItem(OLD_EDIT_KEY), {});
+        const shotEdits = {};
+        const shotDone = {};
+        DATA.shots.forEach((shot) => {
+          if (oldEdits[shot.id]) shotEdits[shot.id] = oldEdits[shot.id];
+          if (localStorage.getItem(`sanya-shot-done-${shot.id}`) === "1") shotDone[shot.id] = true;
+        });
+        return {
+          shotEdits,
+          customShots: [],
+          deletedShots: [],
+          productEdits: {},
+          customProducts: [],
+          deletedProducts: [],
+          productDone: {},
+          shotDone,
+        };
+      }
+
+      function readJson(text, fallback) {
+        try {
+          return text ? JSON.parse(text) : fallback;
+        } catch {
+          return fallback;
+        }
+      }
+
+      function loadStore() {
+        return readJson(localStorage.getItem(STORE_KEY), null) || defaultStore();
+      }
+
+      function saveStore() {
+        localStorage.setItem(STORE_KEY, JSON.stringify(state.store));
+      }
+
+      function esc(value) {
+        return String(value || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function norm(value) {
+        return String(value || "")
+          .toLowerCase()
+          .replace(/\s+/g, "")
+          .replace(/[，。,.！!？?：:；;（）()【】\[\]《》<>·/\\\-_"'“”‘’]/g, "");
+      }
+
+      function clean(value, fallback = "") {
+        const text = String(value || "").trim();
+        return text || fallback;
+      }
+
+      function uuid(prefix) {
+        const list = prefix === "S" ? allShots(true) : allProducts(true);
+        let n = 1;
+        while (list.some((item) => item.id === `${prefix}N${String(n).padStart(3, "0")}`)) n += 1;
+        return `${prefix}N${String(n).padStart(3, "0")}`;
+      }
+
+      function normalizeRef(ref) {
+        return {
+          type: ref.type || "手动参考",
+          productId: ref.productId || "",
+          title: ref.title || "参考链接",
+          url: ref.url || "",
+          importance: ref.importance || ref.position || "",
+        };
+      }
+
+      function mergeShot(base) {
+        const edit = state.store.shotEdits[base.id] || {};
+        return {
+          ...base,
+          ...(edit.fields || {}),
+          productsText: edit.productsText || "",
+          references: Array.isArray(edit.references) ? edit.references : base.references || [],
+          custom: base.custom || false,
+        };
+      }
+
+      function mergeProduct(base) {
+        const edit = state.store.productEdits[base.id] || {};
+        return {
+          ...base,
+          ...(edit.fields || {}),
+          references: Array.isArray(edit.references) ? edit.references : productBaseReferences(base.id),
+          notes: edit.notes || "",
+          custom: base.custom || false,
+        };
+      }
+
+      function allShots(includeDeleted = false) {
+        const deleted = new Set(state.store.deletedShots || []);
+        const base = [...(DATA.shots || []), ...(state.store.customShots || [])].map(mergeShot);
+        return includeDeleted ? base : base.filter((shot) => !deleted.has(shot.id));
+      }
+
+      function allProducts(includeDeleted = false) {
+        const deleted = new Set(state.store.deletedProducts || []);
+        const base = [...(DATA.products || []), ...(state.store.customProducts || [])].map(mergeProduct);
+        return includeDeleted ? base : base.filter((product) => !deleted.has(product.id));
+      }
+
+      function shotById(id) {
+        return allShots(true).find((shot) => shot.id === id);
+      }
+
+      function productById(id) {
+        return allProducts(true).find((product) => product.id === id);
+      }
+
+      function productBaseReferences(productId) {
+        return (DATA.productReferences || [])
+          .filter((ref) => ref.productId === productId)
+          .map(normalizeRef);
+      }
+
+      function productReferences(product) {
+        const refs = [...(product.references || [])];
+        relatedShots(product.id).forEach((shot) => {
+          (shot.references || []).forEach((ref) => {
+            if (!ref.productId || ref.productId === product.id) refs.push(ref);
+          });
+        });
+        return dedupeRefs(refs);
+      }
+
+      function dedupeRefs(refs) {
+        const seen = new Set();
+        return refs.map(normalizeRef).filter((ref) => {
+          const key = `${ref.title}|${ref.url}`;
+          if (!ref.url || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      function relatedShots(productId) {
+        return allShots().filter((shot) => {
+          if ((shot.productIds || []).includes(productId)) return true;
+          if (shot.productsText && norm(shot.productsText).includes(norm(productId))) return true;
+          return false;
+        });
+      }
+
+      function shotProductText(shot) {
+        if (shot.productsText) return shot.productsText;
+        const products = shot.products || [];
+        return products.length ? products.map((p) => `${p.id} ${p.name}`).join(" · ") : "暂无关联成品";
+      }
+
+      function isShotDone(id) {
+        return Boolean(state.store.shotDone[id]);
+      }
+
+      function setShotDone(id, done) {
+        if (done) state.store.shotDone[id] = true;
+        else delete state.store.shotDone[id];
+        localStorage.setItem(`sanya-shot-done-${id}`, done ? "1" : "");
+        saveStore();
+      }
+
+      function isProductDone(id) {
+        return Boolean(state.store.productDone[id]);
+      }
+
+      function setProductDone(id, done) {
+        if (done) state.store.productDone[id] = true;
+        else delete state.store.productDone[id];
+        saveStore();
+      }
+
+      function findGroup(query) {
+        const q = norm(query.replaceAll("现在我在", "").replaceAll("到了", "").replaceAll("我在", ""));
+        return sceneGroups.find((g) => norm(g.label) === q || q.includes(norm(g.label)));
+      }
+
+      function sceneMatches(shot, group) {
+        const scene = norm(shot.scene);
+        return [group.label, ...group.terms].some((term) => scene.includes(norm(term)));
+      }
+
+      function shotSearchText(shot) {
+        return norm([shot.id, shot.scene, shot.packageName, shot.shootWhat, shot.points, shotProductText(shot)].join(" "));
+      }
+
+      function productSearchText(product) {
+        return norm([product.id, product.name, product.description, product.category, product.tags, product.notes].join(" "));
+      }
+
+      function filteredShots() {
+        const group = findGroup(state.query);
+        const q = norm(state.query);
+        let shots = allShots();
+        if (group) shots = shots.filter((shot) => sceneMatches(shot, group));
+        else if (q) shots = shots.filter((shot) => shotSearchText(shot).includes(q));
+        if (state.statusFilter === "done") shots = shots.filter((shot) => isShotDone(shot.id));
+        if (state.statusFilter === "todo") shots = shots.filter((shot) => !isShotDone(shot.id));
+        return shots.sort((a, b) => (priorityRank[a.priority] ?? 9) - (priorityRank[b.priority] ?? 9));
+      }
+
+      function filteredProducts() {
+        const q = norm(state.query);
+        let products = allProducts();
+        if (q && !findGroup(state.query)) products = products.filter((p) => productSearchText(p).includes(q));
+        if (state.statusFilter === "done") products = products.filter((p) => productCompletion(p).done);
+        if (state.statusFilter === "todo") products = products.filter((p) => !productCompletion(p).done);
+        return products;
+      }
+
+      function productCompletion(product) {
+        const shots = relatedShots(product.id);
+        const doneShots = shots.filter((shot) => isShotDone(shot.id)).length;
+        const derivedDone = shots.length > 0 && doneShots === shots.length;
+        return { done: isProductDone(product.id) || derivedDone, doneShots, totalShots: shots.length };
+      }
+
+      function currentTitle() {
+        if (state.mode === "scene") return findGroup(state.query)?.label || clean(state.query, "全部场景");
+        if (state.mode === "product") return "成品模式";
+        if (state.mode === "note") return "笔记模式";
+        return "检查清单";
+      }
+
+      function renderTop() {
+        const titleMap = { scene: "场景模式", product: "成品模式", note: "笔记模式", check: "检查清单" };
+        const subMap = {
+          scene: "现场只看素材任务；参考链接默认不塞进场景卡。",
+          product: "按成品整理参考链接、素材关系和完成状态。",
+          note: "按成品看拍摄注意事项、缺口和临场笔记。",
+          check: "集中查看已拍、待拍、成品和场景完成度。",
+        };
+        document.getElementById("pageTitle").textContent = titleMap[state.mode];
+        document.getElementById("pageSub").textContent = subMap[state.mode];
+        document.getElementById("searchInput").value = state.query;
+        document.querySelectorAll(".mode-tab").forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === state.mode));
+        document.getElementById("bulkBtn").style.display = state.mode === "check" ? "none" : "";
+        renderChips();
+      }
+
+      function renderChips() {
+        const chips = document.getElementById("sceneChips");
+        if (state.mode !== "scene") {
+          chips.innerHTML = "";
+          return;
+        }
+        const active = findGroup(state.query);
+        chips.innerHTML = sceneGroups
+          .map((g) => `<button class="chip ${active?.label === g.label ? "active" : ""}" data-scene="${esc(g.label)}" type="button">${esc(g.label)}</button>`)
+          .join("");
+        chips.querySelectorAll("button").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            state.query = btn.dataset.scene;
+            localStorage.setItem("sanya-current-query", state.query);
+            render();
+          });
+        });
+      }
+
+      function render() {
+        renderTop();
+        state.selected = new Set(Array.from(state.selected).filter((id) => currentIds().includes(id)));
+        document.getElementById("bulkPanel").classList.toggle("open", state.batch);
+        updateBulkSummary();
+        if (state.mode === "scene") renderScene();
+        if (state.mode === "product") renderProducts(false);
+        if (state.mode === "note") renderProducts(true);
+        if (state.mode === "check") renderCheck();
+      }
+
+      function currentIds() {
+        if (state.mode === "scene") return filteredShots().map((s) => s.id);
+        if (state.mode === "product" || state.mode === "note") return filteredProducts().map((p) => p.id);
+        return [];
+      }
+
+      function renderScene() {
+        const shots = filteredShots();
+        const done = shots.filter((shot) => isShotDone(shot.id)).length;
+        document.getElementById("sectionTitle").textContent = currentTitle();
+        document.getElementById("sectionMeta").textContent = `${done}/${shots.length} 已拍 · ${shots.filter((s) => s.priority === "核心必拍").length} 组核心必拍`;
+        document.getElementById("mainView").innerHTML = `<div class="cards">${shots.map(shotCard).join("") || `<div class="empty">没有匹配到素材。</div>`}</div>`;
+        bindCardEvents();
+      }
+
+      function shotCard(shot) {
+        const done = isShotDone(shot.id);
+        const cls = shot.priority === "核心必拍" ? "core" : shot.priority === "高收益" ? "high" : "";
+        const selected = state.selected.has(shot.id);
+        return `
+          <article class="card ${cls} ${done ? "done" : ""}" data-shot="${esc(shot.id)}">
+            <div class="inner">
+              <div class="card-top">
+                <div>
+                  <div class="badges">
+                    ${state.batch ? `<input class="batch-check" data-select="${esc(shot.id)}" type="checkbox" ${selected ? "checked" : ""} />` : ""}
+                    <span class="badge ${cls || "easy"}">${esc(shot.priority || "未标注")}</span>
+                    ${state.store.shotEdits[shot.id] ? `<span class="badge easy">已修改</span>` : ""}
+                  </div>
+                  <h3>${esc(clean(shot.packageName, "未命名素材卡"))}</h3>
+                </div>
+                <label class="check"><input data-done-shot="${esc(shot.id)}" type="checkbox" ${done ? "checked" : ""} />已拍</label>
+              </div>
+              <div class="meta"><b>${esc(shot.id)}</b><span>${esc(shot.date || "日期待定")}</span><span>${esc(shot.timing || "随时")}</span></div>
+              <div class="minimum"><span>保底</span><b>${esc(clean(shot.minimum, "至少补一组可用素材"))}</b></div>
+              <div class="block"><h4 class="block-title">拍什么</h4><p>${esc(clean(shot.shootWhat, "现场补一条干净素材"))}</p></div>
+              <details><summary>拍摄要点 / 成品关系</summary><div class="points">${esc(clean(shot.points, "无额外要点"))}</div><div class="block muted">${esc(shotProductText(shot))}</div></details>
+              <div class="card-actions">
+                <button class="ghost-btn" data-edit-shot="${esc(shot.id)}" type="button">编辑</button>
+                <button class="ghost-btn danger" data-delete-shot="${esc(shot.id)}" type="button">删除</button>
+                <button class="ghost-btn" data-ref-shot="${esc(shot.id)}" type="button">加链接</button>
+              </div>
+            </div>
+          </article>`;
+      }
+
+      function renderProducts(asNotes) {
+        const products = filteredProducts();
+        document.getElementById("sectionTitle").textContent = asNotes ? "成品笔记" : "成品与参考";
+        document.getElementById("sectionMeta").textContent = `${products.length} 个成品 · ${products.filter((p) => productCompletion(p).done).length} 个完成`;
+        document.getElementById("mainView").innerHTML = `<div class="cards">${products.map((p) => productCard(p, asNotes)).join("") || `<div class="empty">没有匹配到成品。</div>`}</div>`;
+        bindCardEvents();
+      }
+
+      function productCard(product, asNotes) {
+        const c = productCompletion(product);
+        const shots = relatedShots(product.id);
+        const refs = productReferences(product);
+        const selected = state.selected.has(product.id);
+        const missing = shots.filter((s) => !isShotDone(s.id)).slice(0, 5);
+        const pointTips = shots.map((s) => s.points).filter(Boolean).slice(0, 3);
+        return `
+          <article class="card ${c.done ? "done" : "high"}" data-product="${esc(product.id)}">
+            <div class="inner">
+              <div class="card-top">
+                <div>
+                  <div class="badges">
+                    ${state.batch ? `<input class="batch-check" data-select="${esc(product.id)}" type="checkbox" ${selected ? "checked" : ""} />` : ""}
+                    <span class="badge high">${esc(product.id)}</span>
+                    ${state.store.productEdits[product.id] ? `<span class="badge easy">已修改</span>` : ""}
+                  </div>
+                  <h3>${esc(clean(product.name, "未命名成品"))}</h3>
+                </div>
+                <label class="check"><input data-done-product="${esc(product.id)}" type="checkbox" ${c.done ? "checked" : ""} />完成</label>
+              </div>
+              <div class="meta"><span>${esc(product.category || "未分类")}</span><span>${esc(product.tags || "")}</span><span>素材 ${c.doneShots}/${c.totalShots}</span></div>
+              ${
+                asNotes
+                  ? `
+                    <div class="block"><h4 class="block-title">我的笔记</h4><div class="points">${esc(clean(product.notes, "点“编辑笔记”补充：口播角度、镜头顺序、封面想法、后期剪辑注意。"))}</div></div>
+                    <div class="block"><h4 class="block-title">待补素材</h4><p>${esc(missing.length ? missing.map((s) => `${s.id} ${s.packageName}`).join(" · ") : "这个成品关联素材都已打勾。")}</p></div>
+                    <details><summary>自动整理的拍摄注意</summary><div class="points">${esc(pointTips.length ? pointTips.join(" / ") : "暂无自动注意事项。")}</div></details>
+                  `
+                  : `
+                    <div class="block"><h4 class="block-title">参考链接</h4><div class="refs">${refs.map(refLink).join("") || `<span class="muted">暂无参考链接</span>`}</div></div>
+                    <details><summary>关联素材</summary><div class="shot-pills">${shots.map(shotPill).join("") || `<span class="muted">暂无关联素材</span>`}</div></details>
+                  `
+              }
+              <div class="card-actions">
+                <button class="ghost-btn" data-edit-product="${esc(product.id)}" type="button">${asNotes ? "编辑笔记" : "编辑成品"}</button>
+                <button class="ghost-btn danger" data-delete-product="${esc(product.id)}" type="button">删除</button>
+                <button class="ghost-btn" data-ref-product="${esc(product.id)}" type="button">加链接</button>
+              </div>
+            </div>
+          </article>`;
+      }
+
+      function refLink(ref) {
+        const label = ref.productId ? `${ref.productId} ${ref.title}` : ref.title;
+        return `<a class="ref-link" href="${esc(ref.url)}" target="_blank" rel="noopener noreferrer">${esc(label)}${ref.importance ? ` · ${esc(ref.importance)}` : ""}</a>`;
+      }
+
+      function shotPill(shot) {
+        return `<span class="shot-pill ${isShotDone(shot.id) ? "done" : ""}">${esc(shot.id)} ${esc(shot.packageName)}</span>`;
+      }
+
+      function renderCheck() {
+        const shots = allShots();
+        const products = allProducts();
+        const doneShots = shots.filter((s) => isShotDone(s.id));
+        const todoShots = shots.filter((s) => !isShotDone(s.id));
+        const doneProducts = products.filter((p) => productCompletion(p).done);
+        document.getElementById("sectionTitle").textContent = "检查清单";
+        document.getElementById("sectionMeta").textContent = "集中看完成和待拍";
+        document.getElementById("mainView").innerHTML = `
+          <div class="stats">
+            <div class="stat"><span>已拍素材</span><b>${doneShots.length}</b></div>
+            <div class="stat"><span>待拍素材</span><b>${todoShots.length}</b></div>
+            <div class="stat"><span>完成成品</span><b>${doneProducts.length}</b></div>
+          </div>
+          <div class="lists">
+            ${checkSection("待拍素材", todoShots.slice(0, 80).map((s) => `${s.id} · ${s.scene} · ${s.packageName}`))}
+            ${checkSection("已拍素材", doneShots.map((s) => `${s.id} · ${s.scene} · ${s.packageName}`))}
+            ${checkSection("成品进度", products.map((p) => {
+              const c = productCompletion(p);
+              return `${c.done ? "完成" : "待补"} · ${p.id} ${p.name} · 素材 ${c.doneShots}/${c.totalShots}`;
+            }))}
+            ${checkSection("场景进度", sceneGroups.map((g) => {
+              const list = allShots().filter((s) => sceneMatches(s, g));
+              const done = list.filter((s) => isShotDone(s.id)).length;
+              return `${g.label} · ${done}/${list.length}`;
+            }))}
+          </div>`;
+      }
+
+      function checkSection(title, lines) {
+        return `<section class="summary-box"><h3>${esc(title)}</h3>${lines.length ? `<p>${lines.map(esc).join("<br>")}</p>` : `<p>暂无</p>`}</section>`;
+      }
+
+      function bindCardEvents() {
+        document.querySelectorAll("[data-done-shot]").forEach((input) => input.addEventListener("change", () => { setShotDone(input.dataset.doneShot, input.checked); render(); }));
+        document.querySelectorAll("[data-done-product]").forEach((input) => input.addEventListener("change", () => { setProductDone(input.dataset.doneProduct, input.checked); render(); }));
+        document.querySelectorAll("[data-select]").forEach((input) => input.addEventListener("change", () => {
+          if (input.checked) state.selected.add(input.dataset.select);
+          else state.selected.delete(input.dataset.select);
+          updateBulkSummary();
+        }));
+        document.querySelectorAll("[data-edit-shot]").forEach((btn) => btn.addEventListener("click", () => openShotEditor(btn.dataset.editShot)));
+        document.querySelectorAll("[data-edit-product]").forEach((btn) => btn.addEventListener("click", () => openProductEditor(btn.dataset.editProduct)));
+        document.querySelectorAll("[data-delete-shot]").forEach((btn) => btn.addEventListener("click", () => deleteShot(btn.dataset.deleteShot)));
+        document.querySelectorAll("[data-delete-product]").forEach((btn) => btn.addEventListener("click", () => deleteProduct(btn.dataset.deleteProduct)));
+        document.querySelectorAll("[data-ref-shot]").forEach((btn) => btn.addEventListener("click", () => { state.selected = new Set([btn.dataset.refShot]); state.batch = true; render(); document.getElementById("bulkRefTitle").focus(); }));
+        document.querySelectorAll("[data-ref-product]").forEach((btn) => btn.addEventListener("click", () => { state.selected = new Set([btn.dataset.refProduct]); state.batch = true; render(); document.getElementById("bulkRefTitle").focus(); }));
+      }
+
+      function updateBulkSummary() {
+        document.getElementById("bulkSummary").textContent = state.batch
+          ? `已选择 ${state.selected.size} 张${state.mode === "scene" ? "素材卡" : "成品卡"}。`
+          : "";
+      }
+
+      function applyBulkReference() {
+        const ref = normalizeRef({
+          type: state.mode === "scene" ? "素材参考" : "成品参考",
+          title: document.getElementById("bulkRefTitle").value.trim(),
+          url: document.getElementById("bulkRefUrl").value.trim(),
+          importance: document.getElementById("bulkRefMeta").value.trim(),
+        });
+        if (!ref.url || !state.selected.size) return;
+        state.selected.forEach((id) => {
+          if (state.mode === "scene") {
+            const shot = shotById(id);
+            const edit = state.store.shotEdits[id] || { fields: {}, references: shot.references || [] };
+            edit.references = dedupeRefs([...(edit.references || shot.references || []), ref]);
+            state.store.shotEdits[id] = edit;
+          } else {
+            const product = productById(id);
+            const edit = state.store.productEdits[id] || { fields: {}, references: product.references || productBaseReferences(id), notes: product.notes || "" };
+            edit.references = dedupeRefs([...(edit.references || product.references || []), { ...ref, productId: id }]);
+            state.store.productEdits[id] = edit;
+          }
+        });
+        document.getElementById("bulkRefTitle").value = "";
+        document.getElementById("bulkRefUrl").value = "";
+        document.getElementById("bulkRefMeta").value = "";
+        state.batch = false;
+        state.selected.clear();
+        saveStore();
+        render();
+      }
+
+      function openModal(title, sub, html, onSave) {
+        state.editing = onSave;
+        document.getElementById("editorTitle").textContent = title;
+        document.getElementById("editorSub").textContent = sub;
+        document.getElementById("editorForm").innerHTML = html;
+        document.getElementById("editorModal").classList.add("open");
+        document.getElementById("editorModal").setAttribute("aria-hidden", "false");
+      }
+
+      function closeModal() {
+        state.editing = null;
+        document.getElementById("editorModal").classList.remove("open");
+        document.getElementById("editorModal").setAttribute("aria-hidden", "true");
+      }
+
+      function shotForm(shot = {}) {
+        return `
+          ${field("shotScene", "场景", shot.scene || currentTitle())}
+          ${field("shotTitle", "素材卡标题", shot.packageName || "")}
+          <div class="field-grid">${field("shotDate", "日期", shot.date || "")}${field("shotTiming", "时机", shot.timing || "")}</div>
+          <div class="field-grid">${selectField("shotPriority", "重要性", shot.priority || "顺手拍")}${field("shotMinimum", "保底", shot.minimum || "")}</div>
+          ${textField("shotWhat", "拍什么", shot.shootWhat || "")}
+          ${textField("shotPoints", "拍摄要点", shot.points || "")}
+          ${textField("shotProducts", "可剪进这些成品", shotProductText(shot).replace("暂无关联成品", ""))}
+          ${refEditor(shot.references || [])}
+          <div class="footer"><button class="ghost-btn" type="button" data-close>取消</button><button class="primary-btn" type="submit">保存</button></div>`;
+      }
+
+      function productForm(product = {}) {
+        return `
+          ${field("productName", "成品名称", product.name || "")}
+          <div class="field-grid">${field("productCategory", "分类", product.category || "")}${field("productTags", "标签", product.tags || "")}</div>
+          ${textField("productDescription", "说明", product.description || "")}
+          ${textField("productNotes", "成品笔记", product.notes || "")}
+          ${refEditor(product.references || productBaseReferences(product.id || ""))}
+          <div class="footer"><button class="ghost-btn" type="button" data-close>取消</button><button class="primary-btn" type="submit">保存</button></div>`;
+      }
+
+      function field(id, label, value) {
+        return `<div class="field"><label for="${id}">${label}</label><input id="${id}" value="${esc(value)}" /></div>`;
+      }
+
+      function textField(id, label, value) {
+        return `<div class="field"><label for="${id}">${label}</label><textarea id="${id}">${esc(value)}</textarea></div>`;
+      }
+
+      function selectField(id, label, value) {
+        return `<div class="field"><label for="${id}">${label}</label><select id="${id}">${["核心必拍", "高收益", "顺手拍"].map((x) => `<option value="${x}" ${x === value ? "selected" : ""}>${x}</option>`).join("")}</select></div>`;
+      }
+
+      function refEditor(refs) {
+        return `<div class="field"><label>参考链接</label><div id="modalRefs">${refs.map(refRow).join("")}</div><button class="ghost-btn" type="button" id="modalAddRef">新增参考链接</button></div>`;
+      }
+
+      function refRow(ref = {}) {
+        return `<div class="ref-row"><div class="ref-row-fields"><input data-ref-title value="${esc(ref.title || "")}" placeholder="参考标题" /><input data-ref-url value="${esc(ref.url || "")}" placeholder="https://..." /><input data-ref-meta value="${esc(ref.importance || ref.position || "")}" placeholder="备注" /></div><button class="remove-ref" type="button">×</button></div>`;
+      }
+
+      function collectModalRefs() {
+        return Array.from(document.querySelectorAll("#modalRefs .ref-row")).map((row) => normalizeRef({
+          title: row.querySelector("[data-ref-title]").value.trim(),
+          url: row.querySelector("[data-ref-url]").value.trim(),
+          importance: row.querySelector("[data-ref-meta]").value.trim(),
+        })).filter((ref) => ref.url);
+      }
+
+      function bindModalRefs() {
+        document.querySelectorAll(".remove-ref").forEach((btn) => btn.addEventListener("click", () => btn.closest(".ref-row").remove()));
+        const add = document.getElementById("modalAddRef");
+        if (add) add.addEventListener("click", () => {
+          document.getElementById("modalRefs").insertAdjacentHTML("beforeend", refRow());
+          bindModalRefs();
+        });
+      }
+
+      function openShotEditor(id) {
+        const shot = shotById(id);
+        openModal(`编辑素材 ${id}`, shot.scene || "素材卡", shotForm(shot), () => saveShot(id));
+        bindModalRefs();
+      }
+
+      function saveShot(id) {
+        const base = shotById(id);
+        const edit = {
+          fields: {
+            scene: val("shotScene"),
+            packageName: val("shotTitle"),
+            date: val("shotDate"),
+            timing: val("shotTiming"),
+            priority: val("shotPriority"),
+            minimum: val("shotMinimum"),
+            shootWhat: val("shotWhat"),
+            points: val("shotPoints"),
+          },
+          productsText: val("shotProducts"),
+          references: collectModalRefs(),
+        };
+        if (base.custom) {
+          state.store.customShots = state.store.customShots.map((s) => (s.id === id ? { ...s, ...edit.fields, productsText: edit.productsText, references: edit.references } : s));
+        } else {
+          state.store.shotEdits[id] = edit;
+        }
+        saveStore();
+        closeModal();
+        render();
+      }
+
+      function openProductEditor(id) {
+        const product = productById(id);
+        openModal(`编辑成品 ${id}`, product.name || "成品卡", productForm(product), () => saveProduct(id));
+        bindModalRefs();
+      }
+
+      function saveProduct(id) {
+        const base = productById(id);
+        const edit = {
+          fields: {
+            name: val("productName"),
+            category: val("productCategory"),
+            tags: val("productTags"),
+            description: val("productDescription"),
+          },
+          notes: val("productNotes"),
+          references: collectModalRefs().map((ref) => ({ ...ref, productId: id })),
+        };
+        if (base.custom) {
+          state.store.customProducts = state.store.customProducts.map((p) => (p.id === id ? { ...p, ...edit.fields, notes: edit.notes, references: edit.references } : p));
+        } else {
+          state.store.productEdits[id] = edit;
+        }
+        saveStore();
+        closeModal();
+        render();
+      }
+
+      function val(id) {
+        return document.getElementById(id)?.value.trim() || "";
+      }
+
+      function openAdd() {
+        if (state.mode === "product" || state.mode === "note") openAddProduct();
+        else openAddShot();
+      }
+
+      function openAddShot() {
+        const id = uuid("S");
+        openModal("新增素材卡", id, shotForm({ id, scene: currentTitle(), priority: "顺手拍", custom: true }), () => {
+          state.store.customShots.push({
+            id,
+            custom: true,
+            scene: val("shotScene"),
+            packageName: val("shotTitle"),
+            date: val("shotDate"),
+            timing: val("shotTiming"),
+            priority: val("shotPriority"),
+            minimum: val("shotMinimum"),
+            shootWhat: val("shotWhat"),
+            points: val("shotPoints"),
+            productsText: val("shotProducts"),
+            references: collectModalRefs(),
+            productIds: [],
+            products: [],
+          });
+          saveStore();
+          closeModal();
+          render();
+        });
+        bindModalRefs();
+      }
+
+      function openAddProduct() {
+        const id = uuid("P");
+        openModal("新增成品卡", id, productForm({ id, custom: true }), () => {
+          state.store.customProducts.push({
+            id,
+            custom: true,
+            name: val("productName"),
+            category: val("productCategory"),
+            tags: val("productTags"),
+            description: val("productDescription"),
+            notes: val("productNotes"),
+            references: collectModalRefs().map((ref) => ({ ...ref, productId: id })),
+          });
+          saveStore();
+          closeModal();
+          render();
+        });
+        bindModalRefs();
+      }
+
+      function deleteShot(id) {
+        if (!confirm(`删除素材卡 ${id}？`)) return;
+        const shot = shotById(id);
+        if (shot.custom) state.store.customShots = state.store.customShots.filter((s) => s.id !== id);
+        else state.store.deletedShots.push(id);
+        delete state.store.shotDone[id];
+        saveStore();
+        render();
+      }
+
+      function deleteProduct(id) {
+        if (!confirm(`删除成品卡 ${id}？`)) return;
+        const p = productById(id);
+        if (p.custom) state.store.customProducts = state.store.customProducts.filter((x) => x.id !== id);
+        else state.store.deletedProducts.push(id);
+        saveStore();
+        render();
+      }
+
+      document.querySelectorAll(".mode-tab").forEach((btn) => btn.addEventListener("click", () => {
+        state.mode = btn.dataset.mode;
+        state.batch = false;
+        state.selected.clear();
+        state.statusFilter = "all";
+        render();
+      }));
+
+      document.getElementById("searchBtn").addEventListener("click", () => {
+        state.query = document.getElementById("searchInput").value.trim();
+        localStorage.setItem("sanya-current-query", state.query);
+        render();
+      });
+
+      document.getElementById("searchInput").addEventListener("change", () => {
+        state.query = document.getElementById("searchInput").value.trim();
+        localStorage.setItem("sanya-current-query", state.query);
+        render();
+      });
+
+      document.getElementById("addBtn").addEventListener("click", openAdd);
+      document.getElementById("bulkBtn").addEventListener("click", () => { state.batch = !state.batch; state.selected.clear(); render(); });
+      document.getElementById("applyBulkBtn").addEventListener("click", applyBulkReference);
+      document.getElementById("showDoneBtn").addEventListener("click", () => { state.statusFilter = "done"; render(); });
+      document.getElementById("showTodoBtn").addEventListener("click", () => { state.statusFilter = "todo"; render(); });
+      document.getElementById("clearFilterBtn").addEventListener("click", () => { state.statusFilter = "all"; render(); });
+      document.getElementById("closeEditor").addEventListener("click", closeModal);
+      document.getElementById("editorModal").addEventListener("click", (event) => { if (event.target.id === "editorModal") closeModal(); });
+      document.getElementById("editorForm").addEventListener("submit", (event) => { event.preventDefault(); if (state.editing) state.editing(); });
+      document.getElementById("editorForm").addEventListener("click", (event) => { if (event.target.matches("[data-close]")) closeModal(); });
+
+      if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      }
+
+      render();
+    </script>
+  </body>
+</html>
