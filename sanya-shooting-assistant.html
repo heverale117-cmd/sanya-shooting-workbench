@@ -387,17 +387,25 @@
         gap: 8px;
       }
 
-      .ref-link,
+      .ref-item,
       .shot-pill {
         display: inline-flex;
         align-items: center;
         max-width: 100%;
-        min-height: 36px;
         border: 1px solid rgba(184, 91, 66, 0.35);
         border-radius: 999px;
         background: #fff8f1;
+        overflow: hidden;
+      }
+
+      .ref-link,
+      .shot-pill-label {
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+        min-height: 36px;
         color: var(--core);
-        padding: 7px 11px;
+        padding: 7px 10px 7px 11px;
         text-decoration: none;
         font-weight: 760;
         font-size: 15px;
@@ -406,6 +414,22 @@
       .shot-pill.done {
         border-color: rgba(111, 135, 97, 0.38);
         background: var(--easy-soft);
+        color: #4f6645;
+      }
+
+      .ref-remove,
+      .pill-remove {
+        width: 34px;
+        min-height: 36px;
+        border: 0;
+        border-left: 1px solid rgba(184, 91, 66, 0.2);
+        background: transparent;
+        color: var(--core);
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .shot-pill.done .shot-pill-label {
         color: #4f6645;
       }
 
@@ -827,6 +851,8 @@
           ...(edit.fields || {}),
           references: Array.isArray(edit.references) ? edit.references : productBaseReferences(base.id),
           notes: edit.notes || "",
+          hiddenRefKeys: edit.hiddenRefKeys || [],
+          hiddenShotIds: edit.hiddenShotIds || [],
           custom: base.custom || false,
         };
       }
@@ -864,13 +890,19 @@
             if (!ref.productId || ref.productId === product.id) refs.push(ref);
           });
         });
-        return dedupeRefs(refs);
+        const hidden = new Set(product.hiddenRefKeys || []);
+        return dedupeRefs(refs).filter((ref) => !hidden.has(refKey(ref)));
+      }
+
+      function refKey(ref) {
+        const normalized = normalizeRef(ref);
+        return `${normalized.title}|${normalized.url}`;
       }
 
       function dedupeRefs(refs) {
         const seen = new Set();
         return refs.map(normalizeRef).filter((ref) => {
-          const key = `${ref.title}|${ref.url}`;
+          const key = refKey(ref);
           if (!ref.url || seen.has(key)) return false;
           seen.add(key);
           return true;
@@ -878,7 +910,9 @@
       }
 
       function relatedShots(productId) {
+        const hidden = new Set(state.store.productEdits[productId]?.hiddenShotIds || []);
         return allShots().filter((shot) => {
+          if (hidden.has(shot.id)) return false;
           if ((shot.productIds || []).includes(productId)) return true;
           if (shot.productsText && norm(shot.productsText).includes(norm(productId))) return true;
           return false;
@@ -1094,8 +1128,8 @@
                     <details><summary>自动整理的拍摄注意</summary><div class="points">${esc(pointTips.length ? pointTips.join(" / ") : "暂无自动注意事项。")}</div></details>
                   `
                   : `
-                    <div class="block"><h4 class="block-title">参考链接</h4><div class="refs">${refs.map(refLink).join("") || `<span class="muted">暂无参考链接</span>`}</div></div>
-                    <details><summary>关联素材</summary><div class="shot-pills">${shots.map(shotPill).join("") || `<span class="muted">暂无关联素材</span>`}</div></details>
+                    <div class="block"><h4 class="block-title">参考链接</h4><div class="refs">${refs.map((ref) => refLink(ref, product.id)).join("") || `<span class="muted">暂无参考链接</span>`}</div></div>
+                    <details><summary>关联素材</summary><div class="shot-pills">${shots.map((shot) => shotPill(shot, product.id)).join("") || `<span class="muted">暂无关联素材</span>`}</div></details>
                   `
               }
               <div class="card-actions">
@@ -1107,13 +1141,13 @@
           </article>`;
       }
 
-      function refLink(ref) {
+      function refLink(ref, productId) {
         const label = ref.productId ? `${ref.productId} ${ref.title}` : ref.title;
-        return `<a class="ref-link" href="${esc(ref.url)}" target="_blank" rel="noopener noreferrer">${esc(label)}${ref.importance ? ` · ${esc(ref.importance)}` : ""}</a>`;
+        return `<span class="ref-item"><a class="ref-link" href="${esc(ref.url)}" target="_blank" rel="noopener noreferrer">${esc(label)}${ref.importance ? ` · ${esc(ref.importance)}` : ""}</a><button class="ref-remove" data-remove-ref="${esc(productId)}" data-ref-key="${esc(refKey(ref))}" type="button" aria-label="从此成品删除参考链接">×</button></span>`;
       }
 
-      function shotPill(shot) {
-        return `<span class="shot-pill ${isShotDone(shot.id) ? "done" : ""}">${esc(shot.id)} ${esc(shot.packageName)}</span>`;
+      function shotPill(shot, productId) {
+        return `<span class="shot-pill ${isShotDone(shot.id) ? "done" : ""}"><span class="shot-pill-label">${esc(shot.id)} ${esc(shot.packageName)}</span><button class="pill-remove" data-remove-shot-link="${esc(productId)}" data-shot-id="${esc(shot.id)}" type="button" aria-label="从此成品删除关联素材">×</button></span>`;
       }
 
       function renderCheck() {
@@ -1163,6 +1197,13 @@
         document.querySelectorAll("[data-delete-product]").forEach((btn) => btn.addEventListener("click", () => deleteProduct(btn.dataset.deleteProduct)));
         document.querySelectorAll("[data-ref-shot]").forEach((btn) => btn.addEventListener("click", () => { state.selected = new Set([btn.dataset.refShot]); state.batch = true; render(); document.getElementById("bulkRefTitle").focus(); }));
         document.querySelectorAll("[data-ref-product]").forEach((btn) => btn.addEventListener("click", () => { state.selected = new Set([btn.dataset.refProduct]); state.batch = true; render(); document.getElementById("bulkRefTitle").focus(); }));
+        document.querySelectorAll("[data-remove-ref]").forEach((btn) => btn.addEventListener("click", (event) => {
+          event.preventDefault();
+          removeProductReference(btn.dataset.removeRef, btn.dataset.refKey);
+        }));
+        document.querySelectorAll("[data-remove-shot-link]").forEach((btn) => btn.addEventListener("click", () => {
+          removeProductShot(btn.dataset.removeShotLink, btn.dataset.shotId);
+        }));
       }
 
       function updateBulkSummary() {
@@ -1197,6 +1238,35 @@
         document.getElementById("bulkRefMeta").value = "";
         state.batch = false;
         state.selected.clear();
+        saveStore();
+        render();
+      }
+
+      function ensureProductEdit(productId) {
+        const product = productById(productId);
+        const current = state.store.productEdits[productId] || {};
+        return {
+          fields: current.fields || {},
+          references: Array.isArray(current.references) ? current.references : product.references || productBaseReferences(productId),
+          notes: current.notes || product.notes || "",
+          hiddenRefKeys: current.hiddenRefKeys || [],
+          hiddenShotIds: current.hiddenShotIds || [],
+        };
+      }
+
+      function removeProductReference(productId, key) {
+        const edit = ensureProductEdit(productId);
+        if (!edit.hiddenRefKeys.includes(key)) edit.hiddenRefKeys.push(key);
+        edit.references = (edit.references || []).filter((ref) => refKey(ref) !== key);
+        state.store.productEdits[productId] = edit;
+        saveStore();
+        render();
+      }
+
+      function removeProductShot(productId, shotId) {
+        const edit = ensureProductEdit(productId);
+        if (!edit.hiddenShotIds.includes(shotId)) edit.hiddenShotIds.push(shotId);
+        state.store.productEdits[productId] = edit;
         saveStore();
         render();
       }
@@ -1316,6 +1386,7 @@
 
       function saveProduct(id) {
         const base = productById(id);
+        const current = state.store.productEdits[id] || {};
         const edit = {
           fields: {
             name: val("productName"),
@@ -1325,6 +1396,8 @@
           },
           notes: val("productNotes"),
           references: collectModalRefs().map((ref) => ({ ...ref, productId: id })),
+          hiddenRefKeys: current.hiddenRefKeys || base.hiddenRefKeys || [],
+          hiddenShotIds: current.hiddenShotIds || base.hiddenShotIds || [],
         };
         if (base.custom) {
           state.store.customProducts = state.store.customProducts.map((p) => (p.id === id ? { ...p, ...edit.fields, notes: edit.notes, references: edit.references } : p));
